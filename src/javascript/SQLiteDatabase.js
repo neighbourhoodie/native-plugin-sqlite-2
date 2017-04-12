@@ -72,6 +72,24 @@ function generateUUID() {
   return uuid;
 };
 
+// pretend we cordova, so we don’t have to fork https://github.com/nolanlawson/pouchdb-adapter-cordova-sqlite/blob/master/lib/index.js#L35
+window.cordova = {}
+  // object for storing references to our promise-objects
+var promises = {}
+
+// this funciton is called by native methods
+// @param promiseId - id of the promise stored in global variable promises
+window.__resolvePromise = function(promiseId, data, error) {
+  if (error) {
+    promises[promiseId].reject(data);
+
+  } else {
+    promises[promiseId].resolve(data);
+  }
+  // remove reference to stored promise
+  delete promises[promiseId];
+}
+
 function callNative(command) {
   var promise = new Promise(function(resolve, reject) {
     // we generate a unique id to reference the promise later
@@ -94,23 +112,6 @@ function callNative(command) {
 
   });
   return promise;
-
-  // object for storing references to our promise-objects
-  var promises = {}
-
-  // this funciton is called by native methods
-  // @param promiseId - id of the promise stored in global variable promises
-  window.__resolvePromise = function(promiseId, data, error) {
-    if (error) {
-      promises[promiseId].reject(data);
-
-    } else {
-      promises[promiseId].resolve(data);
-    }
-    // remove reference to stored promise
-    delete promises[promiseId];
-  }
-
 }
 
 export default SQLiteDatabase;
